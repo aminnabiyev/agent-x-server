@@ -221,12 +221,13 @@ public class CiscoFinesseUserService implements UserService {
                         log.info("Response body is {}", responseStr);
 
                         var node = XmlToJavaConverter.parseXmlToJsonNode(responseStr.toString());
-                        var reasonCodeNode = node != null ? node.get("ReasonCode").iterator() : null;
+                        var reasonCodeNode = node != null ? node.get("ReasonCode") : null;
+                        var reasonCodeNodeIterator=reasonCodeNode!=null?reasonCodeNode.iterator():null;
+                        if (reasonCodeNodeIterator==null) return new ArrayList<>();
                         var reasonCodes = new ArrayList<JsonNode>();
 
-
-                        while (reasonCodeNode != null && reasonCodeNode.hasNext()) {
-                            reasonCodes.add(reasonCodeNode.next());
+                        while (reasonCodeNodeIterator.hasNext()) {
+                            reasonCodes.add(reasonCodeNodeIterator.next());
                         }
                         reasonCodes.forEach(reasonCode ->
                                 reasonCodeList.add(new ReasonCode(reasonCode.get("category").asText(), reasonCode.get("code").asText(), reasonCode.get("label").asText())));
