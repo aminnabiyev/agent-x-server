@@ -229,8 +229,12 @@ public class CiscoFinesseUserService implements UserService {
                         while (reasonCodeNodeIterator.hasNext()) {
                             reasonCodes.add(reasonCodeNodeIterator.next());
                         }
-                        reasonCodes.forEach(reasonCode ->
-                                reasonCodeList.add(new ReasonCode(reasonCode.get("category").asText(), reasonCode.get("code").asText(), reasonCode.get("label").asText())));
+                        reasonCodes.forEach(reasonCode -> {
+                                    var uri=reasonCode.get("uri").asText();
+                                    var splitUri = uri.split("/");
+                                    var reasonCodeId=splitUri[4];
+                                    reasonCodeList.add(new ReasonCode(reasonCode.get("category").asText(),reasonCodeId, reasonCode.get("label").asText()));
+                                });
 
                         log.trace("Returning Reason code list  with size {}", reasonCodeList.size());
                     } else {
@@ -313,7 +317,7 @@ public class CiscoFinesseUserService implements UserService {
 
             responseStr.append(line);
         }
-        System.out.println(responseStr);
+        log.trace(responseStr);
         var node = XmlToJavaConverter.parseXmlToJsonNode(responseStr.toString());
         var ApiErrorNode = node != null ? node.get("ApiError") : null;
         var errorMessageNode = ApiErrorNode != null ? ApiErrorNode.get(errorField) : null;

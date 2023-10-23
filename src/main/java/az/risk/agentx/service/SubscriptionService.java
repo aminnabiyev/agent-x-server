@@ -4,5 +4,5 @@ import az.risk.agentx.dto.AgentDto;
 
 public interface SubscriptionService {
     AgentDto subscribe(int extension);
-    void unsubscribe(String reasonCodeId);
+    AgentDto unsubscribe(String reasonCodeId);
 }

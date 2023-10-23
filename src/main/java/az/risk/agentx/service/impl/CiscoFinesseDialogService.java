@@ -1,5 +1,6 @@
 package az.risk.agentx.service.impl;
 
+import az.risk.agentx.dto.CallDto;
 import az.risk.agentx.util.XmlToJavaConverter;
 import az.risk.agentx.exception.*;
 import az.risk.agentx.model.user.AgentState;
@@ -13,6 +14,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -55,11 +57,12 @@ public class CiscoFinesseDialogService implements CallService {
 
 
     @Override
-    public void makeCall(String toAddress)  {
+    public void makeCall(String toAddress) {
+
     }
 
     @Override
-    public void answerCall(String dialogId) {
+    public CallDto answerCall(String dialogId) {
 
         var loggedInUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -77,6 +80,23 @@ public class CiscoFinesseDialogService implements CallService {
 
         takeActionOnParticipant(dialogId, loggedInUser.getUsername(), loggedInUser.getPassword(), xmlPayload);
 
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        var call = getDialog(dialogId, loggedInUser.getUsername(), loggedInUser.getPassword());
+
+        if (call == null) {
+            throw new InvalidCallActionException("Call not found");
+        }
+
+        if (!call.state().equals("ACTIVE")) {
+            throw new InvalidCallActionException("Failed to answer to call");
+        }
+
+        return call;
 
     }
 
@@ -92,7 +112,7 @@ public class CiscoFinesseDialogService implements CallService {
 
 
     @Override
-    public void endCall(String dialogId) {
+    public CallDto endCall(String dialogId) {
 
         var loggedInUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -110,6 +130,81 @@ public class CiscoFinesseDialogService implements CallService {
 
         takeActionOnParticipant(dialogId, loggedInUser.getUsername(), loggedInUser.getPassword(), xmlPayload);
 
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        var call = getDialog(dialogId, loggedInUser.getUsername(), loggedInUser.getPassword());
+
+        if (call != null) {
+            throw new InvalidCallActionException("Failed to end call");
+        }
+        return new CallDto(dialogId, "0", "0", "Ended");
+    }
+
+    private CallDto getDialog(String dialogId, String username, String password) {
+
+        log.trace("Get dialog init with id {}", dialogId);
+
+        BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
+        try (CloseableHttpClient httpClient = HttpClients.custom()
+                .setDefaultCredentialsProvider(credentialsProvider)
+                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                .setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext))
+                .build()) {
+            HttpGet httpGet = new HttpGet(FINESSE_DIALOG_API_URL.formatted(dialogId));
+
+            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                var statusCode = response.getStatusLine().getStatusCode();
+
+                log.info("Status code from Finesse Get dialog API is {}", statusCode);
+
+                if (statusCode == 200) {
+                    var entity = response.getEntity();
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()))) {
+                        StringBuilder responseStr = new StringBuilder();
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            responseStr.append(line);
+                        }
+                        log.info("Response body is {}", responseStr);
+
+                        var node = XmlToJavaConverter.parseXmlToJsonNode(responseStr.toString());
+                        var fromAddressNode = node != null ? node.get("fromAddress") : null;
+                        var toAddressNode = node != null ? node.get("toAddress") : null;
+                        var stateNode = node != null ? node.get("state") : null;
+
+                        var fromAddress = fromAddressNode != null ? fromAddressNode.asText() : "";
+                        var toAddress = toAddressNode != null ? toAddressNode.asText() : "";
+                        var state = stateNode != null ? stateNode.asText() : "";
+
+                        return new CallDto(dialogId, fromAddress, toAddress, state);
+
+                    } catch (Exception e) {
+                        log.error("Exception occurred while fetching dialog from Finesse : {}", e.getMessage());
+                        log.catching(Level.ERROR, e);
+                        log.trace("Throwing RuntimeException");
+                        throw new RuntimeException(e);
+                    }
+                }
+
+            } catch (IOException e) {
+                log.error(e.getMessage());
+                log.catching(Level.ERROR, e);
+                log.trace("Throwing RuntimeException");
+                throw new RuntimeException(e);
+            }
+
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            log.catching(Level.ERROR, e);
+            log.trace("Throwing RuntimeException");
+            throw new RuntimeException(e);
+        }
+        return null;
     }
 
 

@@ -1,6 +1,7 @@
 package az.risk.agentx.util.xmpp;
 
 import az.risk.agentx.exception.AgentXConnectionFailedException;
+import az.risk.agentx.listener.AgentStateEventListener;
 import az.risk.agentx.listener.DialogEventListener;
 import az.risk.agentx.service.NotificationService;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class PubSubConnection {
     private PubSubManager pubSubManager;
     private XMPPConnection connection;
     private DialogEventListener dialogEventListener;
+    private AgentStateEventListener agentStateEventListener;
 
     private static final String HOSTNAME = "uccx01.zbaz.local";
 
@@ -46,7 +48,9 @@ public class PubSubConnection {
             this.pubSubManager = new PubSubManager(connection, "pubsub." + HOSTNAME);
             this.connection = connection;
             this.dialogEventListener = new DialogEventListener(notificationService, username, extension);
+            this.agentStateEventListener = new AgentStateEventListener(notificationService, username);
             subscribeToDialogEvents(username);
+            subscribeToUserEvents(username);
             log.trace("Connection with id created {} for {}", connection.getConnectionID(), username);
         } catch (XMPPException e) {
             log.error("Xmpp connection failed for {}, Exception: {}", username, e.getMessage());
@@ -110,6 +114,25 @@ public class PubSubConnection {
         log.trace("Adding Dialog event listener");
         node.addItemEventListener(this.dialogEventListener);
         log.trace("Added Dialog event listener");
+    }
+    public void subscribeToUserEvents(String username) {
+
+        log.trace("Subscribe to User events init");
+
+        var nodeId = "/finesse/api/User/%s".formatted(username);
+        log.trace("Start to subscribe node {}", nodeId);
+
+        Node node;
+        try {
+            node = pubSubManager.getNode(nodeId);
+        } catch (XMPPException e) {
+            log.info("Can not get node from PubSubManager");
+            log.trace("Throwing new AgentXConnectionFailedException");
+            throw new AgentXConnectionFailedException("Can not subscribe to Agentx Notification Service");
+        }
+        log.trace("Adding Agent State event listener");
+        node.addItemEventListener(this.agentStateEventListener);
+        log.trace("Added Agent State event listener");
     }
 
 }

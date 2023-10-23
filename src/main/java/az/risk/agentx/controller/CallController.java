@@ -1,12 +1,15 @@
 package az.risk.agentx.controller;
 
+import az.risk.agentx.model.Response;
 import az.risk.agentx.service.CallService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+
+import static org.springframework.http.HttpStatus.ACCEPTED;
+import static org.springframework.http.HttpStatus.OK;
 
 @RestController
 @RequiredArgsConstructor
@@ -15,16 +18,26 @@ public class CallController {
 
     private final CallService callService;
 
-    @GetMapping("/{callId}/answer")
+    @PutMapping("/{callId}/answer")
     public ResponseEntity<?> answerCall(@PathVariable("callId") String callId) {
-        callService.answerCall(callId);
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.ok(
+                Response.builder()
+                        .timeStamp(LocalDateTime.now())
+                        .status(OK.value())
+                        .message("Call answered")
+                        .data(callService.answerCall(callId))
+                        .build());
     }
 
-    @GetMapping("/{callId}/end")
+    @DeleteMapping("/{callId}/end")
     public ResponseEntity<?> endCall(@PathVariable("callId") String callId) {
-        callService.endCall(callId);
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.ok(
+                Response.builder()
+                        .timeStamp(LocalDateTime.now())
+                        .status(OK.value())
+                        .message("Call ended")
+                        .data(callService.endCall(callId))
+                        .build());
     }
 
 }

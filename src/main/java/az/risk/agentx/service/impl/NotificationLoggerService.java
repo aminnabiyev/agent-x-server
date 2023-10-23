@@ -1,7 +1,9 @@
 package az.risk.agentx.service.impl;
 
+import az.risk.agentx.model.event.AgentStateEvent;
 import az.risk.agentx.service.NotificationService;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 @Log4j2
@@ -26,5 +28,10 @@ public class NotificationLoggerService implements NotificationService {
     @Override
     public void endedCall(String sessionId) {
         log.info("Ended call {}", sessionId);
+    }
+
+    @Override
+    public void agentStateChanged(AgentStateEvent event) {
+        log.info("Agent state changed : {}", event);
     }
 }

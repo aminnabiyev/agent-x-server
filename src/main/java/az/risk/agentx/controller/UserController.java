@@ -1,6 +1,7 @@
 package az.risk.agentx.controller;
 
 
+import az.risk.agentx.dto.AgentDto;
 import az.risk.agentx.dto.ChangeStateDto;
 import az.risk.agentx.model.Response;
 import az.risk.agentx.service.SubscriptionService;
@@ -8,6 +9,7 @@ import az.risk.agentx.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDateTime;
 
 import static org.springframework.http.HttpStatus.*;
@@ -24,7 +26,6 @@ public class UserController {
     @PostMapping("connect")
     public ResponseEntity<?> connect(@RequestParam("extension") int extension) {
 
-
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(LocalDateTime.now())
@@ -36,12 +37,13 @@ public class UserController {
 
     @DeleteMapping("disconnect")
     public ResponseEntity<?> disconnect(@RequestParam("reasonCodeId") String reasonCodeId) {
-        subscriptionService.unsubscribe(reasonCodeId);
+        ;
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(LocalDateTime.now())
                         .status(OK.value())
                         .message("Agent Disconnected!")
+                        .data(subscriptionService.unsubscribe(reasonCodeId))
                         .build());
 
     }
@@ -58,7 +60,7 @@ public class UserController {
     }
 
     @GetMapping("reason-codes")
-    public ResponseEntity<?> getReasonCodeList(@RequestParam("category") String category){
+    public ResponseEntity<?> getReasonCodeList(@RequestParam("category") String category) {
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(LocalDateTime.now())

@@ -63,4 +63,15 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
+    @ExceptionHandler({Exception.class})
+    public ResponseEntity<Object> handleException(Exception exception) {
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(
+                Response.builder()
+                        .timeStamp(LocalDateTime.now())
+                        .status(INTERNAL_SERVER_ERROR.value())
+                        .error(INTERNAL_SERVER_ERROR)
+                        .message(exception.getMessage())
+                        .build());
+    }
+
 }

@@ -52,7 +52,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public void unsubscribe(String reasonCodeId) {
+    public AgentDto unsubscribe(String reasonCodeId) {
         log.trace("Unsubscribe called");
 
         var loggedInUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -68,16 +68,16 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         log.trace("Agent state before logout {}", state);
 
-            if (!signOutFromFinesse(reasonCodeId)) {
-                log.trace("Finesse sign out failed");
-                log.trace("Throwing FinesseApiRequestFailedException");
-                throw new FinesseApiRequestFailedException("Finesse sign out failed");
-            }
-            checkIfUserLoggedOut(username, password);
+        if (!signOutFromFinesse(reasonCodeId)) {
+            log.trace("Finesse sign out failed");
+            log.trace("Throwing FinesseApiRequestFailedException");
+            throw new FinesseApiRequestFailedException("Finesse sign out failed");
+        }
+        var userAfterSignOut = checkIfUserSignedOut(username, password);
 
         xmppConnectionFactory.disconnect(username);
 
-
+        return userAfterSignOut;
     }
 
     private boolean signInToFinesse(int extension) {
@@ -123,7 +123,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
 
-    private void checkIfUserLoggedOut(String username, String password) {
+    private AgentDto checkIfUserSignedOut(String username, String password) {
+
         log.trace("Getting user after Sign out http request");
         try {
             Thread.sleep(2000);
@@ -135,16 +136,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             throw new FinesseApiRequestFailedException("Finesse sign out failed");
         }
 
-        var userAfterSignIn = userService.getUser(username, password);
+        var userAfterSignOut = userService.getUser(username, password);
 
-        log.trace("User after sign out {}", userAfterSignIn);
+        log.trace("User after sign out {}", userAfterSignOut);
 
 
-        if ((userAfterSignIn == null || !userAfterSignIn.getState().equals(AgentState.LOGOUT))) {
+        if ((userAfterSignOut == null || !userAfterSignOut.getState().equals(AgentState.LOGOUT))) {
             log.trace("Agent is not logged out");
             log.trace("Throwing FinesseApiRequestFailedException");
             throw new FinesseApiRequestFailedException("Finesse sign out failed");
         }
+
+        return new AgentDto(userAfterSignOut.getUsername(), userAfterSignOut.getState());
     }
 
 }

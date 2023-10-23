@@ -1,7 +1,7 @@
 package az.risk.agentx.listener;
 
 import az.risk.agentx.util.XmlToJavaConverter;
-import az.risk.agentx.model.DialogEvent;
+import az.risk.agentx.model.event.DialogEvent;
 import az.risk.agentx.service.NotificationService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DialogEventListener implements ItemEventListener<Item> {
 
-    private final NotificationService callService;
+    private final NotificationService notificationService;
     private final String username;
     private final int extension;
 
@@ -34,20 +34,20 @@ public class DialogEventListener implements ItemEventListener<Item> {
         if (event != null) {
             switch (event.getCalledState()) {
                 case "ALERTING" ->
-                        callService.newCall(event.getId(), String.valueOf(event.getFromAddress()), event.getStartTime(), username);
+                        notificationService.newCall(event.getId(), String.valueOf(event.getFromAddress()), event.getStartTime(), username);
                 case "DROPPED" -> {
                     switch (event.getCallerState()) {
-                        case "ACTIVE" -> callService.endedCall(event.getId());
-                        case "INITIATED" -> callService.missedCall(event.getId());
+                        case "ACTIVE" -> notificationService.endedCall(event.getId());
+                        case "INITIATED" -> notificationService.missedCall(event.getId());
                         default -> {
-                            if (event.getCallType().equals("OUT")) callService.missedCall(event.getId());
-                            else callService.endedCall(event.getId());
+                            if (event.getCallType().equals("OUT")) notificationService.missedCall(event.getId());
+                            else notificationService.endedCall(event.getId());
                         }
                     }
                 }
                 case "ACTIVE" -> {
                     if (event.getCallerState().equals("ACTIVE") && !event.getCallType().equals("OUT")) {
-                        callService.answeredCall(event.getId());
+                        notificationService.answeredCall(event.getId());
                     }
                 }
             }
