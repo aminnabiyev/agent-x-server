@@ -182,9 +182,13 @@ public class CiscoFinesseUserService implements UserService {
         log.trace("Logged In user is {}", authUser);
 
         var user = getUser(authUser.getUsername(), authUser.getPassword());
-        if (user.getState().equals(AgentState.LOGOUT) || !xmppConnectionFactory.isConnected(user.getUsername())) {
 
+        if (user.getState().equals(AgentState.LOGOUT) || !xmppConnectionFactory.isConnected(user.getUsername())) {
             throw new AgentStateException("Agent is not connected. Please connect first");
+        }
+
+        if(category.equals(AgentState.READY.name())){
+            return new ArrayList<>();
         }
 
         var reasonCodeList = new ArrayList<ReasonCode>();

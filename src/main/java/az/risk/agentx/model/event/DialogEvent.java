@@ -14,8 +14,8 @@ public class DialogEvent {
     private String callType;
     private String callerState;
     private String calledState;
-    private int fromAddress;
-    private int toAddress;
+    private String fromAddress;
+    private String toAddress;
     private String username;
     private String startTime;
 

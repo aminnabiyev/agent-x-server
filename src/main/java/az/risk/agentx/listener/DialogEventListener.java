@@ -70,12 +70,12 @@ public class DialogEventListener implements ItemEventListener<Item> {
                 var toAddressNode = dialogNode.get("toAddress");
                 var mediaPropertiesNode = dialogNode.get("mediaProperties");
                 var dnisNode = mediaPropertiesNode != null ? mediaPropertiesNode.get("DNIS") : null;
-                var dnis = dnisNode != null ? dnisNode.asInt() : 0;
+                var dnis = dnisNode != null ? dnisNode.asText() : "";
                 var callTypeNode = mediaPropertiesNode != null ? mediaPropertiesNode.get("callType") : null;
                 var id = idNode != null ? idNode.asText() : "";
-                var fromAddress = fromAddressNode != null ? fromAddressNode.asInt() : 0;
-                var toAddress = toAddressNode != null ? toAddressNode.asInt() : 0;
-                if (dnis == 0 || dnis != extension) return null;
+                var fromAddress = fromAddressNode != null ? fromAddressNode.asText() : "";
+                var toAddress = toAddressNode != null ? toAddressNode.asText() : "";
+                if (dnis.isEmpty() || !dnis.equals(String.valueOf(extension))) return null;
                 var callType = callTypeNode != null ? callTypeNode.asText() : "";
                 var participantsNode = dialogNode.get("participants").get("Participant");
                 JsonNode callerParticipantNode = null;
@@ -87,13 +87,13 @@ public class DialogEventListener implements ItemEventListener<Item> {
                     while (participantsNodeIterator.hasNext()) {
                         participants.add(participantsNodeIterator.next());
                     }
-                    callerParticipantNode = participants.stream().filter(p -> p.get("mediaAddress").asInt(1) == fromAddress).findAny().orElse(null);
-                    calledParticipantNode = participants.stream().filter(p -> p.get("mediaAddress").asInt(1) == dnis).findAny().orElse(null);
+                    callerParticipantNode = participants.stream().filter(p -> p.get("mediaAddress").asText().equals(fromAddress)).findAny().orElse(null);
+                    calledParticipantNode = participants.stream().filter(p -> p.get("mediaAddress").asText().equals(dnis)).findAny().orElse(null);
 
                 } else {
-                    if (participantsNode.get("mediaAddress").asInt() == fromAddress) {
+                    if (participantsNode.get("mediaAddress").asText().equals(fromAddress)) {
                         callerParticipantNode = participantsNode;
-                    } else if (participantsNode.get("mediaAddress").asInt() == toAddress) {
+                    } else if (participantsNode.get("mediaAddress").asText().equals(toAddress)) {
                         calledParticipantNode = participantsNode;
                     }
                 }
