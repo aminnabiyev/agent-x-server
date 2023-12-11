@@ -109,7 +109,7 @@ public class CiscoFinesseUserService implements UserService {
                         log.error("Exception occurred while fetching user from Finesse : {}", e.getMessage());
                         log.catching(Level.ERROR, e);
                         log.trace("Throwing RuntimeException");
-                        throw new RuntimeException(e);
+                        throw new RuntimeException("Can not fetch user");
                     }
                 }
 
@@ -184,6 +184,7 @@ public class CiscoFinesseUserService implements UserService {
         var user = getUser(authUser.getUsername(), authUser.getPassword());
 
         if (user.getState().equals(AgentState.LOGOUT) || !xmppConnectionFactory.isConnected(user.getUsername())) {
+            log.error("Throwing AgentStateException(Agent is not connected. Please connect first");
             throw new AgentStateException("Agent is not connected. Please connect first");
         }
 

@@ -1,9 +1,11 @@
 package az.risk.agentx.util.xmpp;
 
+import az.risk.agentx.model.user.User;
 import az.risk.agentx.service.NotificationService;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -24,7 +26,16 @@ public class XmppConnectionFactory {
 
         if (connections.containsKey(username)) {
             log.trace("Connection already exist");
-            return;
+            if (connections.get(username).isConnected()) {
+                log.trace("Connection already connected");
+                return;
+            } else {
+                log.trace("Connection exists but not connected");
+                log.trace("Removing disconnected connection");
+                connections.remove(username);
+                log.trace("Disconnected connection removed");
+            }
+
         }
 
         var connection = new PubSubConnection(notificationService, username, password, extension);
@@ -40,18 +51,48 @@ public class XmppConnectionFactory {
             log.trace("Connection exist");
             connection = connections.get(username);
             connection.disconnect();
+            log.trace("Removing disconnected connection");
             connections.remove(username);
+            log.trace("Disconnected connection removed");
         } else {
             log.trace("Connection doesn't exist");
         }
+        System.out.println("After disconnect " + connections.size());
+
+
         log.info("Final connection status is {} connected", connection == null ? "not" : connection.isConnected() ? "" : "not");
     }
 
     public boolean isConnected(String username) {
         if (connections.containsKey(username)) {
-            return connections.get(username).isConnected();
+            log.trace("Connection exist");
+           if(connections.get(username).isConnected()){
+               log.trace("Connection exist and connected");
+               log.trace("returning true");
+               return true;
+           } else {
+               log.trace("Connection exist but  not connected");
+               var loggedInUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+               log.trace("Logged in user is {}", loggedInUser);
+               log.trace("Call connect method");
+               connect(username, loggedInUser.getPassword(), loggedInUser.getExtension());
+           }
+           return isConnected(username);
         }
         return false;
+    }
+
+    public void disc(String username){
+        log.trace("DISC init");
+        PubSubConnection connection = null;
+        if (connections.containsKey(username)) {
+            log.trace("Connection exist");
+            connection = connections.get(username);
+            connection.disconnect();
+        } else {
+            log.trace("Connection doesn't exist");
+        }
+        log.info("Final connection status is {} connected", connection == null ? "not" : connection.isConnected() ? "" : "not");
     }
 
 

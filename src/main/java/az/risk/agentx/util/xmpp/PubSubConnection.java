@@ -43,7 +43,7 @@ public class PubSubConnection {
             connection.connect();
             log.trace("Connected");
             log.trace("Logging in");
-            connection.login(username, password, username);
+            connection.login(username, password, username+"test");
             log.trace("Logged in");
             this.pubSubManager = new PubSubManager(connection, "pubsub." + HOSTNAME);
             this.connection = connection;

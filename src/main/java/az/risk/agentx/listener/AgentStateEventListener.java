@@ -39,6 +39,7 @@ public class AgentStateEventListener implements ItemEventListener<Item> {
         log.trace("start to extract");
 
         JsonNode rootNode = XmlToJavaConverter.parseXmlToJsonNode(item.toXML());
+        log.trace("Agent state event for {} {}", username, rootNode);
         try {
             JsonNode dataNode = rootNode != null ? rootNode.get("notification").get("Update").get("data") : null;
             JsonNode apiErrors = dataNode != null ? dataNode.get("apiErrors") : null;

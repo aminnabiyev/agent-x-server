@@ -6,6 +6,7 @@ import az.risk.agentx.dto.ChangeStateDto;
 import az.risk.agentx.model.Response;
 import az.risk.agentx.service.SubscriptionService;
 import az.risk.agentx.service.UserService;
+import az.risk.agentx.util.xmpp.XmppConnectionFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,12 @@ public class UserController {
 
     private final SubscriptionService subscriptionService;
     private final UserService userService;
+    private final XmppConnectionFactory factory;
+
+//    @GetMapping("disc")
+//    public void disc(@RequestParam("extension") String username){
+//        factory.disc(username);
+//    }
 
 
     @PostMapping("connect")

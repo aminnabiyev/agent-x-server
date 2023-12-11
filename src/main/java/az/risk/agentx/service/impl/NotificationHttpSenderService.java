@@ -33,6 +33,7 @@ import java.security.NoSuchAlgorithmException;
 public class NotificationHttpSenderService implements NotificationService {
 
     private static final String API_URL = "https://tdevappsback.ziraatbank.az:8184/api/CiscoWebHook/%s";
+//    private static final String API_URL = "https://devappsback.ziraatbank.az:8188/api/CiscoWebHook/%s";
 
     private static final SSLContext sslContext;
 
@@ -325,7 +326,7 @@ public class NotificationHttpSenderService implements NotificationService {
                 if (statusCode != 200) {
                     log.trace("Ziraat ChangedStatus Api response is not 200");
                     log.trace("Throwing RuntimeException");
-                    throw new RuntimeException("Can not send new call notification");
+                    throw new RuntimeException("Can not send agent state notification");
                 }
 
             } catch (IOException e) {
